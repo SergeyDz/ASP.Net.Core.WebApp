@@ -6,6 +6,7 @@ pool:
 
 variables:
   GitVersion.SemVer: ''
+  buildConfiguration: 'Release'
 
 # resources:
 #   containers:
@@ -28,6 +29,19 @@ steps:
     displayName: gitversion
     inputs:
       updateAssemblyInfo: true
+  
+  - task: DotNetCoreCLI@2
+      inputs:
+        command: 'restore'
+        feedsToUse: 'select'
+        vstsFeed: 'my-vsts-feed' # A series of numbers and letters
+      displayName: nuget restore
+
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'build'
+        arguments: '--configuration $(buildConfiguration)'
+      displayName: 'dotnet build $(buildConfiguration)'
     
 # - script: hostname
 #   displayName: 'Run a one-line script'
