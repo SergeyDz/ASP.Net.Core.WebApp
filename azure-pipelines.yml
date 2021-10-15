@@ -16,7 +16,7 @@ stages:
 
   - stage: Setup
     jobs: 
-    - job: Install dotnet core
+    - job: InstallDotnetCore
       steps:
         - task: UseDotNet@2
           displayName: 'Use .NET Core sdk'
@@ -24,7 +24,7 @@ stages:
             packageType: sdk
             version: 5.0
             installationPath: $(Agent.ToolsDirectory)/dotnet
-    - job: Install GitVersion
+    - job: InstallGitVersion
       steps:        
       - task: gitversion/setup@0
         inputs:
@@ -32,7 +32,7 @@ stages:
 
   - stage: GitVersion
     jobs: 
-    - job: Extract version
+    - job: ExtractVersion
       steps:
       - task: gitversion/execute@0
         displayName: gitversion
