@@ -12,36 +12,53 @@ variables:
 #   containers:
 #   - container: pycontainer
 #     image: python:3.8
+stages: 
 
-steps:
-  - task: UseDotNet@2
-    displayName: 'Use .NET Core sdk'
-    inputs:
-      packageType: sdk
-      version: 5.0
-      installationPath: $(Agent.ToolsDirectory)/dotnet
+  - stage: Setup
+    jobs: 
+    - job: Install .Net core
+      steps:
+        - task: UseDotNet@2
+          displayName: 'Use .NET Core sdk'
+          inputs:
+            packageType: sdk
+            version: 5.0
+            installationPath: $(Agent.ToolsDirectory)/dotnet
+    - job: Install GitVersion
+      steps:        
+      - task: gitversion/setup@0
+        inputs:
+          versionSpec: '5.7.0'
 
-  - task: gitversion/setup@0
-    inputs:
-      versionSpec: '5.7.0'
-      
-  - task: gitversion/execute@0
-    displayName: gitversion
-    inputs:
-      updateAssemblyInfo: true
-  
-  - task: DotNetCoreCLI@2
-    inputs:
-      command: 'restore'
-      feedsToUse: 'select'
-      vstsFeed: 'my-vsts-feed' # A series of numbers and letters
-    displayName: nuget restore
+  - stage: GitVersion
+    jobs: 
+    - job: Extract version
+      steps:
+      - task: gitversion/execute@0
+        displayName: gitversion
+        inputs:
+          updateAssemblyInfo: true
+    dependsOn: 
+      - Setup
 
-  - task: DotNetCoreCLI@2
-    inputs:
-      command: 'build'
-      arguments: '--configuration $(buildConfiguration)'
-    displayName: 'dotnet build $(buildConfiguration)'
+  - stage: Build
+    jobs:
+      - job: .Net Core Build
+        steps:
+        - task: DotNetCoreCLI@2
+          inputs:
+            command: 'restore'
+            feedsToUse: 'select'
+            vstsFeed: 'my-vsts-feed' # A series of numbers and letters
+          displayName: nuget restore
+        
+        - task: DotNetCoreCLI@2
+          inputs:
+            command: 'build'
+            arguments: '--configuration $(buildConfiguration)'
+          displayName: 'dotnet build $(buildConfiguration)'
+    dependsOn: 
+      - GitVersion
     
 # - script: hostname
 #   displayName: 'Run a one-line script'
