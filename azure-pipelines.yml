@@ -26,4 +26,5 @@ steps:
 - task: CmdLine@2
   inputs: 
     script: hostname
+  displayName: 'Asking hostname inside container'
   target: pycontainer
