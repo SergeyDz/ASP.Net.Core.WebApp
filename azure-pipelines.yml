@@ -43,7 +43,7 @@ stages:
 
   - stage: Build
     jobs:
-      - job: .Net Core Build
+      - job: Build
         steps:
         - task: DotNetCoreCLI@2
           inputs:
