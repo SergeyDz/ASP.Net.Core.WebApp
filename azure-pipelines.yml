@@ -16,7 +16,7 @@ stages:
 
   - stage: Setup
     jobs: 
-    - job: Install .Net core
+    - job: Install dotnet core
       steps:
         - task: UseDotNet@2
           displayName: 'Use .NET Core sdk'
