@@ -10,13 +10,20 @@ resources:
     image: python:3.8
 
 steps:
-- script: echo Hello, world!
+- script: hostname
   displayName: 'Run a one-line script'
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
+# Using the task syntax
+- task: CmdLine@2
+  inputs:
+    script: |
+      echo Add other tasks to build, test, and deploy your project.
+      echo See https://aka.ms/yaml
+  env:
+    AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
   displayName: 'Run a multi-line script'
 
-- task: AnotherTask@1
+- task: CmdLine@2
+  inputs: 
+    script: hostname
   target: pycontainer
