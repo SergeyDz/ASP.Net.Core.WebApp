@@ -48,6 +48,7 @@ steps:
     displayName: Build an image
     inputs:
       repository: $(imageName)
+      tags: '$(GitVersion.SemVer)'
       command: build
       Dockerfile: Dockerfile
     
