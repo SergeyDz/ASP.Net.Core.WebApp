@@ -1,12 +1,20 @@
 ---
 resource_types:
-- name: github-commit-status
-  type: docker-image
+- name: cogito
+  type: registry-image
+  check_every: 1h
   source:
-    repository: troykinsella/concourse-github-commit-status
-    tag: latest
+    repository: pix4d/cogito
 
 resources:
+- name: gh-status
+  type: cogito
+  check_every: 1h
+  source:
+    owner: SergeyDz
+    repo: ASP.Net.Core.WebApp
+    access_token: ((githubtoken))
+
 # The repo with our Dockerfile
 - name: asp-net-core-webapp-source
   type: git
@@ -24,15 +32,22 @@ resources:
     username: ((registry-username))
     password: ((dockerhub))
 
-# Update GitHub PR
-- name: pr
-  type: github-commit-status
-  source:
-    github_token: ((githubtoken))
-
 
 jobs:
 - name: build-and-push
+  on_success:
+    put: gh-status
+    inputs: [asp-net-core-webapp-source]
+    params: {state: success}
+  on_failure:
+    put: gh-status
+    inputs: [asp-net-core-webapp-source]
+    params: {state: failure}
+  on_error:
+    put: gh-status
+    inputs: [asp-net-core-webapp-source]
+    params: {state: error}
+    
   plan:
   - get: asp-net-core-webapp-source
   - task: build-task-image
@@ -42,8 +57,6 @@ jobs:
       image_resource:
         type: registry-image
         source:
-          # Check out the README for oci-build-task at
-          # https://github.com/concourse/oci-build-task
           repository: concourse/oci-build-task
       inputs:
       - name: asp-net-core-webapp-source
@@ -58,8 +71,3 @@ jobs:
     params:
       image: image/image.tar
       version: '1.0'
-  - put: pr
-    params:
-      repo: asp-net-core-webapp-source
-      state: success
-      description: Docker push succeess
