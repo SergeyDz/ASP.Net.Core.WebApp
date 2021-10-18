@@ -1,0 +1,65 @@
+---
+resource_types:
+- name: github-commit-status
+  type: docker-image
+  source:
+    repository: troykinsella/concourse-github-commit-status
+    tag: latest
+
+resources:
+# The repo with our Dockerfile
+- name: asp-net-core-webapp-source
+  type: git
+  icon: github
+  source:
+    uri: https://github.com/SergeyDz/ASP.Net.Core.WebApp.git
+    branch: main
+
+# Where we will push the image
+- name: asp-net-core-webapp-docker
+  type: registry-image
+  icon: docker
+  source:
+    repository: ((image-repo-name))/asp.net.core.webapp
+    username: ((registry-username))
+    password: ((dockerhub))
+
+# Update GitHub PR
+- name: pr
+  type: github-commit-status
+  source:
+    github_token: ((githubtoken))
+
+
+jobs:
+- name: build-and-push
+  plan:
+  - get: asp-net-core-webapp-source
+  - task: build-task-image
+    privileged: true
+    config:
+      platform: linux
+      image_resource:
+        type: registry-image
+        source:
+          # Check out the README for oci-build-task at
+          # https://github.com/concourse/oci-build-task
+          repository: concourse/oci-build-task
+      inputs:
+      - name: asp-net-core-webapp-source
+      outputs:
+      - name: image
+      params:
+        CONTEXT: asp-net-core-webapp-source
+        UNPACK_ROOTFS: "true" # only needed if using image in a future step
+      run:
+        path: build
+  - put: asp-net-core-webapp-docker
+    params:
+      image: image/image.tar
+      version: '1.0'
+  - put: pr
+    params:
+      repo: asp-net-core-webapp-source
+      state: success
+      description: Docker push succeess
