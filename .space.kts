@@ -1,13 +1,24 @@
+
 job("Build and push Docker") {
     docker {
-        build {
-            context = "docker"
-            file = "./Dockerfile"
-            labels["vendor"] = "TFG"
+        // get auth data from secrets and put it to env vars
+        env["DOCKERHUB_USER"] = Secrets("dockerhub_user")
+        env["DOCKERHUB_TOKEN"] = Secrets("dockerhub_token")
+
+        // put auth data to Docker config
+        beforeBuildScript {
+            content = """
+                B64_AUTH=${'$'}(echo -n ${'$'}DOCKERHUB_USER:${'$'}DOCKERHUB_TOKEN | base64)
+                echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"auth\":\"${'$'}B64_AUTH\"}}}" > ${'$'}DOCKER_CONFIG/config.json
+            """
         }
 
-        //push("mycompany.registry.jetbrains.space/p/mp/mydocker/myimage") {
-        //    tags("version1.0")
-        //}
+        build {
+            labels["vendor"] = "tfg"
+        }
+
+        push("sergeydz/asp.net.core.webapp") {
+            tags("1.0-space")
+        }
     }
 }
